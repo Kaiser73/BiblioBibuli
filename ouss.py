@@ -21,9 +21,19 @@ from collections import defaultdict
 
 st.set_page_config(layout="wide", page_icon="🎓", page_title="Bibliobibuli")
 
-audio_file = open(r"C:\Users\ousse\OneDrive\Bureau\Final\Saee.mp3",'rb')
-audio_byte = audio_file.read()
-st.audio(audio_byte, format='audio/ogg')
+
+url = 'https://drive.google.com/file/d/1oVxOIOQQ6jjKJvbCo2xxrYjeSIbW1O3e/view?usp=share_link' 
+path = 'https://drive.google.com/uc?export=download&id='+url.split('/')[-2]
+ratings = pd.read_csv(path)
+
+url = 'https://drive.google.com/file/d/1Q4oXJU0pH0VxTRECaBsdg4ldAI0QTvxH/view?usp=share_link' 
+path = 'https://drive.google.com/uc?export=download&id='+url.split('/')[-2]
+books = pd.read_csv(path)
+
+
+#audio_file = open(,'rb')
+#audio_byte = audio_file.read()
+#st.audio(audio_byte, format='audio/ogg')
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -40,6 +50,7 @@ def load_lottieurl(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+
 
 Lotti = load_lottieurl('https://assets3.lottiefiles.com/packages/lf20_ad3uxjiv.json')
 Page1 = load_lottieurl('https://assets3.lottiefiles.com/packages/lf20_1a8dx7zj.json')
@@ -68,11 +79,6 @@ def Ho():
     with col3:
         st.write(':green[©️ Made By Oussama Lajnef ©️]')
 
-
-
-
-books = pd.read_csv(r'C:\Users\ousse\OneDrive\Bureau\Final\Books.csv')
-ratings = pd.read_csv(r'C:\Users\ousse\OneDrive\Bureau\Final\Ratings.csv')
 
 
 #Books cover by Lectures
@@ -131,17 +137,9 @@ Ranking['views'] = pd.DataFrame(ratings.groupby('ISBN')['User-ID'].count())
 Ranking = Ranking.loc[Ranking['views']>50]
 Ranking.sort_values('views',ascending=False).head()
 Big = pd.merge(Ranking,books,how='left', on= 'ISBN')
-Titles1 = ['',]
-Titles1.append(Big['Book-Title'])
-
-
-
-#Book by Surprise
-#Cool = st.write(surprise_me_Movie)
-#user_choice = random.choice(range(1,3013))
+Titles1 = list(Big['Book-Title'])
 
     
-
 
 #Function for lectures
 def Lec():
@@ -177,30 +175,42 @@ def Choi():
     st.subheader('Recommended by Choice')
     st_lottie(Page3, height=400, width=400, key="try")
     st.subheader(':blue[“Books are mirrors: you only see in them what you already have inside you.”] \n:green[**― Carlos Ruiz Zafón**]')
-    book_choice = st.selectbox(f'What Book Did You Read Recently :red[{name}]?',options=Titles1) 
-    Choice_Ratings = Pitem.loc[:,book_choice]
-    Choice_Ratings[Choice_Ratings>0]
-    Similar_to_choice = Pitem.corrwith(Choice_Ratings)
-    Corr_choice = pd.DataFrame(Similar_to_choice, columns=['PearsonR'])
-    Corr_choice.dropna(inplace=True)
+    Real = pd.merge(books,ratings,how='inner', on= 'ISBN')
+    Liane =pd.DataFrame(Real['User-ID'].value_counts())
+    Liane = Liane.reset_index()
+    Liane.columns =["User-ID", "count_User-ID"]
+    Liane = Liane.loc[Liane['count_User-ID']>50]
+    fake = pd.merge(Real,Liane, how='right', on="User-ID")
+    Pitem = pd.pivot_table(data=fake, values='Book-Rating', index='User-ID', columns='ISBN')
     Ranking= pd.DataFrame(ratings.groupby('ISBN')['Book-Rating'].mean())
-    Ranking['Lectures'] = pd.DataFrame(ratings.groupby('ISBN')['User-ID'].count())
-    Corr_choice_Final = Corr_choice.join(Ranking['Lectures'])
-    Corr_choice_Final.drop(book_choice, inplace=True)
-    top = Corr_choice_Final[Corr_choice_Final['Lectures']>=10]
-    top = Corr_choice_Final[Corr_choice_Final['PearsonR']==1].sort_values('Lectures', ascending=False).head(my_sld_val)
-    Final = pd.merge(top,books,how='left', on='ISBN')
-    cover3 = list(Final['Image-URL-L'])
-    st.image(cover3)
-    Final = Final[['ISBN','Book-Title','Book-Author','Year-Of-Publication','Book-Rating','views','Publisher']]
-    Final = Final.rename(columns={'Book-Rating':'Rating',
-    'views':'Lectures',
-    'rating':'Rating',
-    'Book-Title':'Title',
-    'Book-Author':'Author',
-    'Year-Of-Publication':'Publication Year'})
-    Final.set_index('Title', inplace=True)
-    st.table(top_lecture)
+    Ranking['views'] = pd.DataFrame(ratings.groupby('ISBN')['User-ID'].count())
+    Ranking = Ranking.loc[Ranking['views']>50]
+    Ranking.sort_values('views',ascending=False).head()
+    Big = pd.merge(Ranking,books,how='left', on= 'ISBN')
+    Titles1 = list(Big['Book-Title'])
+    Titles1.insert(0,'')
+    book_choice = st.selectbox(f'What Book Did You Read Recently :red[{name}]?',options=Titles1)
+    if book_choice == '':
+      st.write('Please write or chose a Book')
+    else:
+      code = Big.loc[Big['Book-Title']== book_choice,'ISBN'].values[0] 
+      Choice_Ratings = Pitem.loc[:,code]
+      Choice_Ratings[Choice_Ratings>0]
+      Similar_to_choice = Pitem.corrwith(Choice_Ratings)
+      Corr_choice = pd.DataFrame(Similar_to_choice, columns=['PearsonR'])
+      Corr_choice.dropna(inplace=True)
+      Ranking= pd.DataFrame(ratings.groupby('ISBN')['Book-Rating'].mean())
+      Ranking['Lectures'] = pd.DataFrame(ratings.groupby('ISBN')['User-ID'].count())
+      Corr_choice_Final = Corr_choice.join(Ranking['Lectures'])
+      Corr_choice_Final.drop(code, inplace=True)
+      top = Corr_choice_Final[Corr_choice_Final['Lectures']>=10]
+      top = Corr_choice_Final[Corr_choice_Final['PearsonR']==1].sort_values('Lectures', ascending=False).head(my_sld_val)
+      Final = pd.merge(top,books,how='left', on='ISBN')
+      cover3 = list(Final['Image-URL-L'])
+      st.image(cover3)
+      Final = Final[['Book-Title','Book-Author','Year-Of-Publication','Lectures','Publisher']]
+      Final.set_index('Book-Title', inplace=True)
+      st.table(Final)
 
 
 
@@ -209,8 +219,14 @@ def Surp():
     st.subheader('Recommended by Surprise')
     st_lottie(Page4, height=400, width=400, key="try")
     st.subheader(':blue[“Books may well be the only true magic.”] \n:green[**― Alice Hoffman**]')
-    if st.button('Surprise Me !'):
-        user_choice = random.choice(range(1,3013))
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write('')
+    with col2:
+        if st.button('Surprise Me !'):
+          user_choice = random.choice(range(1,3013))
+    with col3:
+        st.write('')
     reader= Reader()
     data = Dataset.load_from_df(fake[['User-ID','ISBN','Book-Rating']],reader)
     trainset = data.build_full_trainset()
@@ -236,14 +252,8 @@ def Surp():
     End = user_ratings.merge(fake, how='left', on='ISBN').drop_duplicates('ISBN', keep='first').head(my_sld_val)
     cover4 = list(End['Image-URL-L'])
     st.image(cover4)
-    End = End[['ISBN','Book-Title','Book-Author','Year-Of-Publication','Book-Rating','views','Publisher']]
-    End = End.rename(columns={'Book-Rating':'Rating',
-    'views':'Lectures',
-    'rating':'Rating',
-    'Book-Title':'Title',
-    'Book-Author':'Author',
-    'Year-Of-Publication':'Publication Year'})
-    End.set_index('Title', inplace=True)
+    End = End[['Book-Title','Book-Author','Year-Of-Publication','Publisher']]
+    End.set_index('Book-Title', inplace=True)
     st.table(End)
     
         
