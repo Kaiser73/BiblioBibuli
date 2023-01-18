@@ -24,11 +24,11 @@ st.set_page_config(page_icon="🎓", page_title="Bibliobibuli")
 
 url = 'https://drive.google.com/file/d/1oVxOIOQQ6jjKJvbCo2xxrYjeSIbW1O3e/view?usp=share_link' 
 path = 'https://drive.google.com/uc?export=download&id='+url.split('/')[-2]
-ratings = pd.read_csv(path)
+ratings = pd.read_csv(path, low_memory=False)
 
 url = 'https://drive.google.com/file/d/1Q4oXJU0pH0VxTRECaBsdg4ldAI0QTvxH/view?usp=share_link' 
 path = 'https://drive.google.com/uc?export=download&id='+url.split('/')[-2]
-books = pd.read_csv(path)
+books = pd.read_csv(path, low_memory=False)
 
 
 audio_file = open(r'Saee.mp3','rb')
