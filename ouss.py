@@ -31,9 +31,9 @@ path = 'https://drive.google.com/uc?export=download&id='+url.split('/')[-2]
 books = pd.read_csv(path)
 
 
-#audio_file = open(url_song,'rb')
-#audio_byte = audio_file.read()
-#st.audio(audio_byte, format='audio/ogg')
+audio_file = open(Saee.mp3,'rb')
+audio_byte = audio_file.read()
+st.audio(audio_byte, format='audio/ogg')
 
 col1, col2, col3 = st.columns(3)
 with col1:
